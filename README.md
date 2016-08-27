@@ -1,2 +1,2 @@
 # noipUpdater
-A NO-IP.com DDNS updater
+A NO-IP.com Dynamic DNS updater
