@@ -10,7 +10,7 @@ import argparse
 import startup_utils
 
 logging.basicConfig(
-    filename='ddns-update-service.log',
+    filename='{}/ddns-update-service.log'.format(os.path.dirname(__file__)),
     level=logging.DEBUG,
     format='%(asctime)s [ddns-update] %(levelname)-8s %(message)s'
 )

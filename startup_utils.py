@@ -61,8 +61,8 @@ def add_startup(_username, _password, _hostname):
     os_name = os.name
     if os_name == 'nt':
         pythonw_exe = _get_pythonw_path()
-        script = '@echo off\n{} "{}/updater.pyw" -s {} {} {}'.format(pythonw_exe, _get_current_path(),
-                                                                     _username, _password, _hostname)
+        script = '@echo off\n{} "{}/updater.py" -s {} {} {}'.format(pythonw_exe, _get_current_path(),
+                                                                    _username, _password, _hostname)
         if not _is_user_admin():
             logging.warning('Current user is not an Admin. Creating script in current directory')
             logging.warning('Please move the "updater.bat" file to the startup folder manually')
