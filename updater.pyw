@@ -7,6 +7,7 @@ import ctypes
 import os
 import logging
 import argparse
+import startup_utils
 
 logging.basicConfig(
     filename='ddns-update-service.log',
@@ -40,6 +41,8 @@ class Updater(object):
     __daemon = None
 
     def __init__(self, _username, _password, _hostname, _daemon=False):
+        logging.info('')
+        logging.info('===============================================')
         logging.info('Service Initializing')
         logging.debug('username: {}'.format(_username))
         self.__auth = HTTPBasicAuth(_username, _password)
@@ -48,11 +51,19 @@ class Updater(object):
         logging.debug('daemon: {}'.format(_daemon))
         self.__daemon = _daemon
 
+        if self.__daemon and not os.path.exists(startup_utils.get_path()):
+            if not os.path.exists(startup_utils.get_file_name()):
+                startup_utils.add_startup(arguments.username, arguments.password, arguments.hostname)
+            else:
+                logging.warning('Startup script need to be copied to startup folder')
+                ctypes.windll.user32.MessageBoxA(0, 'Startup script need to be copied to startup folder.',
+                                                 'No-Ip Updater', 0)
+
     def start(self):
         continue_running = True
         logging.info('Starting service run...')
         while continue_running:
-            continue_running = self._update()
+            continue_running = self._update() and self.__daemon
             if continue_running:
                 Updater._start_hours_delay(2.5)
         logging.info('Stopping service...')
@@ -73,10 +84,13 @@ class Updater(object):
                 logging.error('Input Error: {}'.format(ex.msg))
                 return_value = False
             except BadError as ex:
-                self._show_message('Critical error.\n\rRemoved script from start-up folder.')
-                shortcut = r'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\updater.lnk'
-                logging.critical('{}. Deleting script from start-up folder - {}'.format(ex.msg, shortcut))
-                os.remove(shortcut)
+                log_msg = popup_msg = ''
+                if self.__daemon:
+                    popup_msg = '\n\rRemoving script from start-up folder.'
+                    log_msg = ' Removing script from start-up folder - {}'.format(startup_utils.get_path())
+                    startup_utils.remove_startup()
+                self._show_message('Critical error.{}'.format(popup_msg))
+                logging.critical('{}.'.format(ex.msg, log_msg))
                 return_value = False
         else:
             logging.info('No change in IP. Skipping...')
@@ -160,7 +174,10 @@ if __name__ == "__main__":
     argument_parser.add_argument('hostname',
                                  type=str,
                                  help='Host name URL')
+    argument_parser.add_argument('-s', '--startup',
+                                 action='store_true',
+                                 help='Configure to run on startup')
     arguments = argument_parser.parse_args()
 
-    updater = Updater(arguments.username, arguments.password, arguments.hostname)
+    updater = Updater(arguments.username, arguments.password, arguments.hostname, arguments.startup)
     updater.start()
