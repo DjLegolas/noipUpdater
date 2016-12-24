@@ -34,13 +34,19 @@ class BadError(UpdaterError):
 
 
 class Updater(object):
-
     __auth = None
     __hostname = None
     __last_ip = None
     __daemon = None
 
     def __init__(self, _username, _password, _hostname, _daemon=False):
+        """
+        No-IP.com DDNS updater
+        :param _username: Login name for NO-IP
+        :param _password: Login password for NO-IP
+        :param _hostname: Host name to update
+        :param _daemon: True for enable auto start-up. Default: False
+        """
         logging.info('')
         logging.info('===============================================')
         logging.info('Service Initializing')
@@ -51,7 +57,7 @@ class Updater(object):
         logging.debug('daemon: {}'.format(_daemon))
         self.__daemon = _daemon
 
-        if self.__daemon and not os.path.exists(startup_utils.get_path()):
+        if self.__startup and not os.path.exists(startup_utils.get_path()):
             if not os.path.exists(startup_utils.get_file_name()):
                 startup_utils.add_startup(arguments.username, arguments.password, arguments.hostname)
             else:
@@ -60,6 +66,10 @@ class Updater(object):
                                                  'No-Ip Updater', 0)
 
     def start(self):
+        """
+        Start running the update process.
+        If in daemon mode, will loop forever and try to update every 2.5 hours.
+        """
         continue_running = True
         logging.info('Starting service run...')
         while continue_running:
@@ -69,11 +79,17 @@ class Updater(object):
         logging.info('Stopping service...')
 
     def _update(self):
+        """
+        Start update sequence
+        :return: True if successfully ran, else False
+        """
         logging.info('Getting current IP address')
+        # get the current IP and check if changed
         new_ip = self._get_ip()
         is_different = new_ip != self.__last_ip
         logging.debug('if {} != {} : {}'.format(new_ip, self.__last_ip, is_different))
         if is_different:
+            # IP changed so will send an update to NO-IP
             try:
                 logging.info('IP was changed. Sending update to NO-IP')
                 self._send_update(new_ip)
@@ -93,12 +109,17 @@ class Updater(object):
                 logging.critical('{}.'.format(ex.msg, log_msg))
                 return_value = False
         else:
+            # IP didn't change
             logging.info('No change in IP. Skipping...')
             return_value = True
         return return_value
 
     @staticmethod
     def _get_ip():
+        """
+        Gets the host IP address
+        :return: current IP address
+        """
         ip = None
         while ip is None or ip == '':
             try:
@@ -113,11 +134,16 @@ class Updater(object):
         return ip
 
     def _send_update(self, new_ip):
+        """
+        Send an update command to NO-IP
+        :param new_ip: the new IP of the host
+        """
         update_url = 'https://dynupdate.no-ip.com/nic/update'
         payload = {'hostname': self.__hostname, 'myip': new_ip}
         headers = {'user-agent': 'python update client Win10/ dj_legolas1@hotmail.com'}
         logging.debug(headers)
         again = True
+        # start requesting until success or error
         while again:
             r = None
             try:
@@ -152,14 +178,26 @@ class Updater(object):
 
     @staticmethod
     def _show_message(message):
+        """
+        Shows a message window in case of an error
+        :param message: the message to show
+        """
         ctypes.windll.user32.MessageBoxA(0, message, 'No-Ip Updater', 0)
 
     @staticmethod
     def _start_minutes_delay(amount_of_minutes):
+        """
+        Set up a delay in minutes
+        :param amount_of_minutes: how many minutes to hold
+        """
         time.sleep(_minute * amount_of_minutes)
 
     @staticmethod
     def _start_hours_delay(amount_of_hours):
+        """
+        Set up a delay in hours
+        :param amount_of_hours: how many hours to hold
+        """
         time.sleep(_hour * amount_of_hours)
 
 

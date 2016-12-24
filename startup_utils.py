@@ -11,6 +11,10 @@ _linux_file = 'noipUpdater'
 
 
 def get_path():
+    """
+    Get the path to the stat-up script
+    :return: path to start-up script
+    """
     if os.name == 'nt':
         path = r'{}\{}'.format(_win_path, _win_file)
     elif os.name == 'posix':
@@ -21,6 +25,10 @@ def get_path():
 
 
 def get_file_name():
+    """
+    Get the stat-up script name
+    :return: name
+    """
     if os.name == 'nt':
         name = _win_file
     elif os.name == 'posix':
@@ -31,6 +39,9 @@ def get_file_name():
 
 
 def remove_startup():
+    """
+    Delete start-up script
+    """
     os_name = os.name
     path = get_path()
     if os.path.exists(path):
@@ -61,16 +72,30 @@ def remove_startup():
 
 
 def _get_pythonw_path():
+    """
+    Get the python executable path
+    :return: path to python executable file
+    """
     import sys
     python_exe = sys.executable
     return python_exe.replace('.exe', 'w.exe')
 
 
 def _get_current_path():
+    """
+    Get the current path location
+    :return: current path location
+    """
     return os.path.dirname(__file__)
 
 
 def add_startup(_username, _password, _hostname):
+    """
+    Adds new start-up script
+    :param _username: Login name for NO-IP
+    :param _password: Login password for NO-IP
+    :param _hostname: Host name to update
+    """
     os_name = os.name
     admin_error = script = None
     run_script = '"{}" -s {} {} {}'.format(os.path.join(_get_current_path(), 'updater.py'),
@@ -103,13 +128,18 @@ def add_startup(_username, _password, _hostname):
 
 
 def _is_user_admin():
+    """
+    Check the current user if is the system admin
+    :return: True if the current user is admin
+    """
     import traceback
     if os.name == 'nt':
         import ctypes
         # WARNING: requires Windows XP SP2 or higher!
         try:
             return ctypes.windll.shell32.IsUserAnAdmin()
-        except:
+        except Exception as ex:
+            logging.exception(ex.message)
             logging.exception(traceback.print_exc())
             logging.debug('Admin check failed, assuming not an admin.')
             return False
