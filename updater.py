@@ -57,7 +57,7 @@ class Updater(object):
         logging.debug('daemon: {}'.format(_daemon))
         self.__daemon = _daemon
 
-        if self.__startup and not os.path.exists(startup_utils.get_path()):
+        if self.__daemon and not os.path.exists(startup_utils.get_path()):
             if not os.path.exists(startup_utils.get_file_name()):
                 startup_utils.add_startup(arguments.username, arguments.password, arguments.hostname)
             else:
